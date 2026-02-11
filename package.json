@@ -47,6 +47,7 @@
     "@caffeine/errors": "link:@caffeine/errors",
     "@caffeine/models": "link:@caffeine/models",
     "@caffeine/schema": "link:@caffeine/schema",
+    "@caffeine/value-objects": "link:@caffeine/value-objects",
     "@sinclair/typebox": "^0.34.48",
     "slugify": "^1.6.6",
     "uuid": "^13.0.0"

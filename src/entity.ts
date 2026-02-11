@@ -1,4 +1,5 @@
 import { InvalidEntityData } from "@caffeine/errors";
+import type { IValueObjectMetadata } from "@caffeine/value-objects/types";
 import type { EntityDTO } from "@/dtos";
 import type { IEntity } from "./types";
 import { EntitySchema } from "./schemas/entity.schema";
@@ -7,6 +8,7 @@ export abstract class Entity implements IEntity {
 	public readonly id: string;
 	public readonly createdAt: string;
 	public updatedAt?: string;
+	protected abstract entitySource: string;
 
 	protected constructor({ createdAt, id, updatedAt }: EntityDTO) {
 		this.id = id;
@@ -18,7 +20,7 @@ export abstract class Entity implements IEntity {
 		const isAValidEntity = EntitySchema.match(data);
 
 		if (!isAValidEntity)
-			throw new InvalidEntityData("Cannot build the target entity.");
+			throw new InvalidEntityData("Cannot build the target entity");
 
 		return data;
 	}
@@ -26,4 +28,8 @@ export abstract class Entity implements IEntity {
 	protected update(): void {
 		this.updatedAt = new Date().toISOString();
 	}
+
+	protected abstract getPropertyContext(
+		propertyName: string,
+	): IValueObjectMetadata;
 }

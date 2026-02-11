@@ -8,7 +8,7 @@ export abstract class Entity implements IEntity {
 	public readonly id: string;
 	public readonly createdAt: string;
 	public updatedAt?: string;
-	protected abstract entitySource: string;
+	protected abstract readonly entitySource: string;
 
 	protected constructor({ createdAt, id, updatedAt }: EntityDTO) {
 		this.id = id;

@@ -5,10 +5,11 @@ import type { IEntity } from "./types";
 import { EntitySchema } from "./schemas/entity.schema";
 
 export abstract class Entity implements IEntity {
+	public abstract readonly entitySource: string;
+
 	public readonly id: string;
 	public readonly createdAt: string;
 	public updatedAt?: string;
-	protected abstract readonly entitySource: string;
 
 	protected constructor({ createdAt, id, updatedAt }: EntityDTO) {
 		this.id = id;

@@ -36,5 +36,5 @@ export abstract class Entity<SchemaType extends TSchema>
 		this.updatedAt = new Date().toISOString();
 	}
 
-	public abstract [EntityContext](propertyName: string): IValueObjectMetadata;
+	public abstract [EntityContext](name: string): IValueObjectMetadata;
 }

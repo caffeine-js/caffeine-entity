@@ -7,5 +7,5 @@ import type { IValueObjectMetadata } from "@caffeine/value-objects/types";
 export interface IEntity<SchemaType extends TSchema> extends IRawEntity {
 	readonly [EntitySource]: string;
 	readonly [EntitySchema]: Schema<SchemaType>;
-	readonly [EntityContext]: (propertyName: string) => IValueObjectMetadata;
+	readonly [EntityContext]: (name: string) => IValueObjectMetadata;
 }

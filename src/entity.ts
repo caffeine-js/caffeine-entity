@@ -1,8 +1,6 @@
-import { InvalidEntityData } from "@caffeine/errors";
 import type { IValueObjectMetadata } from "@caffeine/value-objects/types";
 import type { EntityDTO } from "@/dtos";
 import type { IEntity } from "./types";
-import { EntitySchema as EntityBuildedSchema } from "./schemas";
 import { EntitySource, EntitySchema, EntityContext } from "./symbols";
 import type { TSchema } from "@sinclair/typebox";
 import type { Schema } from "@caffeine/schema";
@@ -39,15 +37,6 @@ export abstract class Entity<SchemaType extends TSchema>
 		this._updatedAt = updatedAt
 			? DateTimeVO.make(updatedAt, this[EntityContext]("updatedAt"))
 			: undefined;
-	}
-
-	protected static prepare(data: EntityDTO): EntityDTO {
-		const isAValidEntity = EntityBuildedSchema.match(data);
-
-		if (!isAValidEntity)
-			throw new InvalidEntityData("Cannot build the target entity");
-
-		return data;
 	}
 
 	protected update(): void {

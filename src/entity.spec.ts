@@ -1,14 +1,12 @@
 import { describe, expect, it } from "vitest";
 import { Entity } from "./entity";
 import type { EntityDTO } from "@/dtos";
-import { InvalidEntityData } from "@caffeine/errors";
 import { makeEntity } from "@/factories";
-import { EntitySource, EntitySchema, EntityContext } from "@/symbols";
-import type { IValueObjectMetadata } from "@caffeine/value-objects/types";
+import { EntitySource, EntitySchema } from "@/symbols";
 import type { IRawEntity } from "./types";
-
 import { Type } from "@sinclair/typebox";
 import { Schema } from "@caffeine/schema";
+import { InvalidPropertyException } from "@caffeine/errors/domain";
 
 const TestDTO = Type.Object({
 	id: Type.String(),
@@ -24,13 +22,9 @@ class TestEntity extends Entity<typeof TestDTO> {
 		super(data);
 	}
 
-	public [EntityContext](_propertyName: string): IValueObjectMetadata {
-		return {} as IValueObjectMetadata;
-	}
-
 	public static create(data?: EntityDTO): TestEntity {
 		const entityData = data ?? makeEntity();
-		const preparedData = TestEntity.prepare(entityData);
+		const preparedData = new TestEntity(entityData);
 		return new TestEntity(preparedData);
 	}
 
@@ -64,7 +58,9 @@ describe("Entity", () => {
 
 	it("should throw InvalidEntityData if prepare receives invalid data", () => {
 		const invalidData = { id: "invalid-uuid" } as IRawEntity;
-		expect(() => TestEntity.create(invalidData)).toThrow(InvalidEntityData);
+		expect(() => TestEntity.create(invalidData)).toThrow(
+			InvalidPropertyException,
+		);
 	});
 
 	it("should update updatedAt field when update() is called", async () => {

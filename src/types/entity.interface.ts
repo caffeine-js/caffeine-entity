@@ -1,9 +1,11 @@
-import type { EntitySource } from "@/symbols";
+import type { EntityContext, EntitySchema, EntitySource } from "@/symbols";
+import type { IRawEntity } from "./raw-entity.interface";
+import type { Schema } from "@caffeine/schema";
+import type { TSchema } from "@sinclair/typebox";
+import type { IValueObjectMetadata } from "@caffeine/value-objects/types";
 
-export interface IEntity {
+export interface IEntity<SchemaType extends TSchema> extends IRawEntity {
 	readonly [EntitySource]: string;
-
-	readonly id: string;
-	readonly createdAt: string;
-	readonly updatedAt?: string;
+	readonly [EntitySchema]: Schema<SchemaType>;
+	readonly [EntityContext]: (propertyName: string) => IValueObjectMetadata;
 }

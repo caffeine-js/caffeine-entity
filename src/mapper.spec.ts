@@ -1,19 +1,14 @@
 import { describe, expect, it } from "vitest";
+import { InvalidDomainDataException } from "@caffeine/errors/domain";
 import { Entity } from "./entity";
 import { Mapper } from "./mapper";
 import { ValueObject } from "@caffeine/value-objects/core";
-import {
-	Type,
-	type TArray,
-	type TObject,
-	type TOptional,
-	type TString,
-} from "@sinclair/typebox";
+import { Type } from "@sinclair/typebox";
 import { Schema } from "@caffeine/schema";
 import type { IValueObjectMetadata } from "@caffeine/value-objects/types";
 import type { EntityDTO } from "@/dtos";
 import { makeEntity } from "./factories";
-import { EntitySource } from "./symbols";
+import { EntitySchema, EntitySource, EntityContext } from "./symbols";
 
 // 1. Define Schema
 const TestDTO = Type.Object({
@@ -28,7 +23,9 @@ const TestDTO = Type.Object({
 	nestedEntityLike: Type.Object({
 		nested: Type.String(),
 	}),
+	privateProp: Type.String(),
 });
+
 const TestSchema = Schema.make(TestDTO);
 
 // 2. Define Value Object
@@ -44,8 +41,9 @@ class TestValueObject extends ValueObject<string, typeof TestDTO> {
 }
 
 // 3. Define Entity
-class TestEntity extends Entity {
+class TestEntity extends Entity<typeof TestDTO> {
 	public readonly [EntitySource] = "test";
+	public readonly [EntitySchema] = TestSchema;
 
 	public simpleField: string;
 	public valueObjectField: TestValueObject;
@@ -59,6 +57,7 @@ class TestEntity extends Entity {
 
 	// Private/Internal properties that should be ignored
 	public _privateProp = "secret";
+	public __ignoredInstanceProp = "ignored";
 
 	public constructor(
 		data: EntityDTO & {
@@ -82,7 +81,15 @@ class TestEntity extends Entity {
 		return `computed-${this.simpleField}`;
 	}
 
-	protected getPropertyContext(_propertyName: string): IValueObjectMetadata {
+	public get __secretGetter(): string {
+		return "should-be-ignored";
+	}
+
+	public regularMethod(): string {
+		return "method";
+	}
+
+	public [EntityContext](_propertyName: string): IValueObjectMetadata {
 		return {} as IValueObjectMetadata;
 	}
 
@@ -102,68 +109,90 @@ class TestEntity extends Entity {
 describe("Mapper", () => {
 	it("should map basic entity fields", () => {
 		const entity = TestEntity.create({ simpleField: "test-value" });
-		const dto = Mapper.toDTO(entity, TestSchema);
+		const dto = Mapper.toDTO(entity);
 
 		expect(dto.id).toBe(entity.id);
 		expect(dto.createdAt).toBe(entity.createdAt);
+		expect(dto.updatedAt).toBeUndefined();
 		expect(dto.simpleField).toBe("test-value");
+	});
+
+	it("should map updatedAt when present", () => {
+		const now = new Date().toISOString();
+		const entity = TestEntity.create({ updatedAt: now });
+		const dto = Mapper.toDTO(entity);
+		expect(dto.updatedAt).toBe(now);
 	});
 
 	it("should map getters", () => {
 		const entity = TestEntity.create({ simpleField: "test" });
-		const dto = Mapper.toDTO(entity, TestSchema);
+		const dto = Mapper.toDTO(entity);
 		expect(dto.computedField).toBe("computed-test");
 	});
 
 	it("should map ValueObjects to their values", () => {
 		const vo = TestValueObject.create("custom-vo");
 		const entity = TestEntity.create({ valueObjectField: vo });
-		const dto = Mapper.toDTO(entity, TestSchema);
+		const dto = Mapper.toDTO(entity);
 		expect(dto.valueObjectField).toBe("custom-vo");
 	});
 
 	it("should map arrays of primitives", () => {
 		const arr = ["x", "y"];
 		const entity = TestEntity.create({ arrayField: arr });
-		const dto = Mapper.toDTO(entity, TestSchema);
+		const dto = Mapper.toDTO(entity);
 		expect(dto.arrayField).toEqual(["x", "y"]);
 	});
 
 	it("should map arrays of ValueObjects", () => {
 		const arr = [TestValueObject.create("1"), TestValueObject.create("2")];
 		const entity = TestEntity.create({ arrayValueObjectField: arr });
-		const dto = Mapper.toDTO(entity, TestSchema);
+		const dto = Mapper.toDTO(entity);
 		expect(dto.arrayValueObjectField).toEqual(["1", "2"]);
 	});
 
 	it("should map nested objects with toDTO method", () => {
 		const entity = TestEntity.create();
-		const dto = Mapper.toDTO(entity, TestSchema);
+		const dto = Mapper.toDTO(entity);
 		expect(dto.nestedEntityLike).toEqual({ nested: "dto" });
 	});
 
 	it("should ignore internal properties starting with double underscore", () => {
 		const entity = TestEntity.create();
-		const dto = Mapper.toDTO(entity, TestSchema);
+		const dto = Mapper.toDTO(entity);
 		// @ts-expect-error - testing runtime behavior of stripping internal props
 		expect(dto.__source).toBeUndefined();
 		// @ts-expect-error - testing runtime behavior
 		expect(dto.__schema).toBeUndefined();
+		// @ts-expect-error - testing runtime behavior
+		expect(dto.__secretGetter).toBeUndefined();
+		expect((dto as any).regularMethod).toBeUndefined();
+		expect((dto as any).__ignoredInstanceProp).toBeUndefined();
 	});
 
 	it("should include properties starting with single underscore but strip the underscore from key", () => {
 		const entity = TestEntity.create();
-		const dto = Mapper.toDTO(entity, TestSchema);
+		const dto = Mapper.toDTO(entity);
 
 		// The property is _privateProp on the entity
 		// The mapper logic: const finalKey = key.startsWith("_") ? key.slice(1) : key;
 		// So _privateProp becomes privateProp in DTO
 
-		// @ts-expect-error - DTO type definition might not know about this dynamic mapping perfectly without schema adjustment
 		expect(dto.privateProp).toBe("secret");
 
 		// Ensure the original key is NOT present
 		// @ts-expect-error
 		expect(dto._privateProp).toBeUndefined();
+	});
+
+	it("should throw InvalidDomainDataException when mapped data does not match schema", () => {
+		const entity = TestEntity.create({ simpleField: "test" });
+
+		// Force an invalid state that violates the schema (simpleField should be string)
+		// @ts-expect-error - forcing invalid type for testing purposes
+		entity.simpleField = 123;
+
+		// The mapper validates against entity[EntitySchema] which expects string
+		expect(() => Mapper.toDTO(entity)).toThrow(InvalidDomainDataException);
 	});
 });

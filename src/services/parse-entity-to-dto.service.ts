@@ -3,7 +3,9 @@ import { ValueObject } from "@caffeine/value-objects/core";
 import type { TSchema, Static } from "@sinclair/typebox";
 
 export const ParseEntityToDTOService = {
-	run: <SchemaType extends TSchema>(entity: IEntity): Static<SchemaType> => {
+	run: <SchemaType extends TSchema, EntityType extends IEntity<SchemaType>>(
+		entity: EntityType,
+	): Static<SchemaType> => {
 		const dto: Record<string, unknown> = {};
 
 		Object.entries(entity).forEach(([key, value]) => {
@@ -17,11 +19,7 @@ export const ParseEntityToDTOService = {
 		const descriptors = Object.getOwnPropertyDescriptors(proto);
 
 		Object.entries(descriptors).forEach(([key, descriptor]) => {
-			if (
-				typeof descriptor.get === "function" &&
-				!key.startsWith("__") &&
-				key !== "constructor"
-			) {
+			if (typeof descriptor.get === "function" && !key.startsWith("__")) {
 				const finalKey = key.startsWith("_") ? key.slice(1) : key;
 
 				dto[finalKey] = (entity as unknown as Record<string, unknown>)[key];

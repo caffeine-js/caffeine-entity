@@ -1,11 +1,9 @@
-import type { Entity } from "@/entity";
+import type { IEntity } from "@/types";
 import { ValueObject } from "@caffeine/value-objects/core";
 import type { TSchema, Static } from "@sinclair/typebox";
 
 export const ParseEntityToDTOService = {
-	run: <SchemaType extends TSchema>(
-		entity: Entity<SchemaType>,
-	): Static<SchemaType> => {
+	run: <SchemaType extends TSchema>(entity: IEntity): Static<SchemaType> => {
 		const dto: Record<string, unknown> = {};
 
 		Object.entries(entity).forEach(([key, value]) => {

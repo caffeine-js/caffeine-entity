@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { makeEntityFactory } from "./make-entity.factory";
+import { makeEntity } from "./make-entity.factory";
 
 describe("Make Entity Factory", () => {
 	it("should create a valid entity dto", () => {
-		const entity = makeEntityFactory();
+		const entity = makeEntity();
 
 		expect(entity).toBeDefined();
 		expect(entity.id).toBeDefined();

@@ -1,7 +1,7 @@
+import type { EntityDTO } from "@/dtos";
 import { generateUUID } from "@/helpers";
-import type { IEntity } from "@/types";
 
-export function makeEntityFactory(): IEntity {
+export function makeEntity(): EntityDTO {
 	return {
 		id: generateUUID(),
 		createdAt: new Date().toISOString(),

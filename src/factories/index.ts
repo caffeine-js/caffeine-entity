@@ -1,1 +1,1 @@
-export { makeEntityFactory } from "./make-entity.factory";
+export { makeEntity } from "./make-entity.factory";

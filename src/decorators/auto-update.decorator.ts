@@ -1,10 +1,6 @@
 import type { Entity } from "@/entity";
-import type { TSchema } from "@sinclair/typebox";
 
-export function AutoUpdate<
-	EntityType extends Entity<SchemaType>,
-	SchemaType extends TSchema,
->(
+export function AutoUpdate<EntityType extends Entity>(
 	_target: EntityType,
 	_propertyKey: string,
 	descriptor: PropertyDescriptor,

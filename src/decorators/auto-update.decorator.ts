@@ -1,13 +1,17 @@
 import type { Entity } from "@/entity";
+import type { TSchema } from "@sinclair/typebox";
 
-export function AutoUpdate<T extends Entity>(
-	_target: T,
+export function AutoUpdate<
+	EntityType extends Entity<SchemaType>,
+	SchemaType extends TSchema,
+>(
+	_target: EntityType,
 	_propertyKey: string,
 	descriptor: PropertyDescriptor,
 ): PropertyDescriptor {
 	const originalMethod = descriptor.value;
 
-	descriptor.value = function (this: Entity, ...args: unknown[]) {
+	descriptor.value = function (this: EntityType, ...args: unknown[]) {
 		const result = originalMethod.apply(this, args);
 		this.update();
 		return result;

@@ -4,10 +4,26 @@ import { Entity } from "./entity";
 import type { EntityDTO } from "@/dtos";
 import { InvalidEntityData } from "@caffeine/errors";
 import { makeEntityFactory } from "./factories";
+import { Type } from "@sinclair/typebox";
+import type { Schema } from "@caffeine/schema";
+import type { IValueObjectMetadata } from "@caffeine/value-objects/types";
 
-class TestEntity extends Entity {
+const TestSchema = Type.Object({});
+
+class TestEntity extends Entity<typeof TestSchema> {
+	public readonly __source = "test";
+	protected readonly __schema = {
+		schema: TestSchema,
+		version: "1.0.0",
+		kind: "entity",
+	} as unknown as Schema<typeof TestSchema>;
+
 	public constructor(data: EntityDTO) {
 		super(data);
+	}
+
+	protected getPropertyContext(_propertyName: string): IValueObjectMetadata {
+		return {} as IValueObjectMetadata;
 	}
 
 	public unpack(): EntityDTO {
@@ -131,5 +147,20 @@ describe("Entity", () => {
 		expect(new Date(entity.updatedAt!).getTime()).toBeGreaterThan(
 			new Date(oldDate).getTime(),
 		);
+	});
+
+	it("should convert entity to DTO using toDTO method", () => {
+		const id = v7();
+		const createdAt = new Date().toISOString();
+		const updatedAt = new Date().toISOString();
+
+		const entity = TestEntity.create({ id, createdAt, updatedAt });
+		const dto = entity.toDTO();
+
+		expect(dto).toEqual({
+			id,
+			createdAt: new Date(createdAt).toISOString(),
+			updatedAt: new Date(updatedAt).toISOString(),
+		});
 	});
 });

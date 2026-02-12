@@ -3,9 +3,14 @@ import type { IValueObjectMetadata } from "@caffeine/value-objects/types";
 import type { EntityDTO } from "@/dtos";
 import type { IEntity } from "./types";
 import { EntitySchema } from "./schemas/entity.schema";
+import type { Schema } from "@caffeine/schema";
+import type { TSchema, Static } from "@sinclair/typebox";
 
-export abstract class Entity implements IEntity {
-	public abstract readonly entitySource: string;
+import { ParseEntityToDTOService } from "@/services";
+
+export abstract class Entity<SchemaType extends TSchema> implements IEntity {
+	public abstract readonly __source: string;
+	protected abstract readonly __schema: Schema<SchemaType>;
 
 	public readonly id: string;
 	public readonly createdAt: string;
@@ -33,4 +38,8 @@ export abstract class Entity implements IEntity {
 	protected abstract getPropertyContext(
 		propertyName: string,
 	): IValueObjectMetadata;
+
+	public toDTO(): Static<SchemaType> {
+		return ParseEntityToDTOService.run(this);
+	}
 }

@@ -1,0 +1,55 @@
+import type { Entity } from "@/entity";
+import { ValueObject } from "@caffeine/value-objects/core";
+import type { TSchema, Static } from "@sinclair/typebox";
+
+export const ParseEntityToDTOService = {
+	run: <SchemaType extends TSchema>(
+		entity: Entity<SchemaType>,
+	): Static<SchemaType> => {
+		const dto: Record<string, unknown> = {};
+
+		Object.entries(entity).forEach(([key, value]) => {
+			if (!key.startsWith("__")) {
+				const finalKey = key.startsWith("_") ? key.slice(1) : key;
+				dto[finalKey] = value;
+			}
+		});
+
+		const proto = Object.getPrototypeOf(entity);
+		const descriptors = Object.getOwnPropertyDescriptors(proto);
+
+		Object.entries(descriptors).forEach(([key, descriptor]) => {
+			if (
+				typeof descriptor.get === "function" &&
+				!key.startsWith("__") &&
+				key !== "constructor"
+			) {
+				const finalKey = key.startsWith("_") ? key.slice(1) : key;
+
+				dto[finalKey] = (entity as unknown as Record<string, unknown>)[key];
+			}
+		});
+
+		const processValue = (value: unknown): unknown => {
+			if (Array.isArray(value)) {
+				return value.map(processValue);
+			}
+			if (value instanceof ValueObject) {
+				return value.value;
+			}
+			if (
+				value &&
+				typeof value === "object" &&
+				"toDTO" in value &&
+				typeof (value as { toDTO: unknown }).toDTO === "function"
+			) {
+				return (value as { toDTO: () => unknown }).toDTO();
+			}
+			return value;
+		};
+
+		return Object.fromEntries(
+			Object.entries(dto).map(([key, value]) => [key, processValue(value)]),
+		) as Static<SchemaType>;
+	},
+} as const;

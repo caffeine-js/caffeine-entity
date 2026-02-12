@@ -54,5 +54,10 @@ export abstract class Entity<SchemaType extends TSchema>
 		this._updatedAt = DateTimeVO.now(this[EntityContext]("updatedAt"));
 	}
 
-	public abstract [EntityContext](name: string): IValueObjectMetadata;
+	public [EntityContext](name: string): IValueObjectMetadata {
+		return {
+			name,
+			source: this[EntitySource],
+		};
+	}
 }

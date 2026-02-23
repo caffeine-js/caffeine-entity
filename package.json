@@ -1,61 +1,65 @@
 {
-  "name": "@caffeine/entity",
-  "version": "0.0.1",
-  "author": {
-    "name": "Alan Reis",
-    "email": "alanreisanjo@gmail.com",
-    "url": "https://hoyasumii.dev"
-  },
-  "main": "./dist/index.cjs",
-  "module": "./dist/index.js",
-  "types": "./dist/index.d.ts",
-  "typesVersions": {
-    "*": {
-      "*": [
-        "./dist/*/index.d.ts"
-      ]
-    }
-  },
-  "exports": {
-    ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js",
-      "require": "./dist/index.cjs"
+    "name": "@caffeine/entity",
+    "version": "0.0.1",
+    "author": {
+        "name": "Alan Reis",
+        "email": "alanreisanjo@gmail.com",
+        "url": "https://hoyasumii.dev"
     },
-    "./*": {
-      "types": "./dist/*/index.d.ts",
-      "import": "./dist/*/index.js",
-      "require": "./dist/*/index.cjs"
+    "main": "./dist/index.cjs",
+    "module": "./dist/index.js",
+    "types": "./dist/index.d.ts",
+    "typesVersions": {
+        "*": {
+            "*": [
+                "./dist/*/index.d.ts"
+            ]
+        }
+    },
+    "exports": {
+        ".": {
+            "types": "./dist/index.d.ts",
+            "import": "./dist/index.js",
+            "require": "./dist/index.cjs"
+        },
+        "./*": {
+            "types": "./dist/*/index.d.ts",
+            "import": "./dist/*/index.js",
+            "require": "./dist/*/index.cjs"
+        }
+    },
+    "files": [
+        "dist"
+    ],
+    "type": "module",
+    "devDependencies": {
+        "@types/bun": "latest",
+        "@vitest/coverage-v8": "^4.0.18",
+        "tsup": "^8.5.1",
+        "vite-tsconfig-paths": "^6.0.5",
+        "vitest": "^4.0.18",
+        "@commitlint/cli": "^20.4.1",
+        "@commitlint/config-conventional": "^20.4.1",
+        "husky": "^9.1.7"
+    },
+    "peerDependencies": {
+        "typescript": "^5",
+        "@sinclair/typebox": "^0.34.48"
+    },
+    "dependencies": {
+        "@caffeine/errors": "link:@caffeine/errors",
+        "@caffeine/models": "link:@caffeine/models",
+        "@caffeine/schema": "link:@caffeine/schema",
+        "@caffeine/value-objects": "link:@caffeine/value-objects",
+        "@sinclair/typebox": "^0.34.48",
+        "slugify": "^1.6.6",
+        "uuid": "^13.0.0"
+    },
+    "scripts": {
+        "build": "tsup 'src/**/index.ts' --format cjs,esm --dts --tsconfig tsconfig.build.json --clean",
+        "test:unit": "vitest run",
+        "test:coverage": "vitest run --coverage",
+        "setup": "bun run build && bun link",
+        "prepare": "husky"
     }
-  },
-  "files": [
-    "dist"
-  ],
-  "type": "module",
-  "devDependencies": {
-    "@types/bun": "latest",
-    "@vitest/coverage-v8": "^4.0.18",
-    "tsup": "^8.5.1",
-    "vite-tsconfig-paths": "^6.0.5",
-    "vitest": "^4.0.18"
-  },
-  "peerDependencies": {
-    "typescript": "^5",
-    "@sinclair/typebox": "^0.34.48"
-  },
-  "dependencies": {
-    "@caffeine/errors": "link:@caffeine/errors",
-    "@caffeine/models": "link:@caffeine/models",
-    "@caffeine/schema": "link:@caffeine/schema",
-    "@caffeine/value-objects": "link:@caffeine/value-objects",
-    "@sinclair/typebox": "^0.34.48",
-    "slugify": "^1.6.6",
-    "uuid": "^13.0.0"
-  },
-  "scripts": {
-    "build": "tsup 'src/**/index.ts' --format cjs,esm --dts --tsconfig tsconfig.build.json --clean",
-    "test:unit": "vitest run",
-    "test:coverage": "vitest run --coverage",
-    "setup": "bun run build && bun link"
-  }
 }

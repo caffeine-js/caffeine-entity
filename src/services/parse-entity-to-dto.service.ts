@@ -1,3 +1,4 @@
+import { Entity } from "@/entity";
 import type { IEntity } from "@/types";
 import { Schema } from "@caffeine/schema";
 import { ValueObject } from "@caffeine/value-objects/core";
@@ -28,23 +29,19 @@ export const ParseEntityToDTOService = {
 		});
 
 		const processValue = (value: unknown): unknown => {
-			if (Array.isArray(value)) {
-				return value.map(processValue);
-			}
-			if (value instanceof ValueObject) {
-				return value.value;
-			}
-			if (value instanceof Schema) {
-				return value.toString();
-			}
+			if (value === null) return value;
+
+			if (Array.isArray(value)) return value.map(processValue);
+			if (value instanceof ValueObject) return value.value;
+			if (value instanceof Schema) return value.toString();
+			if (value instanceof Entity) return ParseEntityToDTOService.run(value);
 			if (
-				value &&
 				typeof value === "object" &&
-				"toDTO" in value &&
-				typeof (value as { toDTO: unknown }).toDTO === "function"
-			) {
+				"toDTO" in value! &&
+				typeof (value as { toDTO: () => unknown }).toDTO === "function"
+			)
 				return (value as { toDTO: () => unknown }).toDTO();
-			}
+
 			return value;
 		};
 

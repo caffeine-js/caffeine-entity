@@ -1,4 +1,5 @@
 import type { IEntity } from "@/types";
+import { Schema } from "@caffeine/schema";
 import { ValueObject } from "@caffeine/value-objects/core";
 import type { TSchema, Static } from "@sinclair/typebox";
 
@@ -32,6 +33,9 @@ export const ParseEntityToDTOService = {
 			}
 			if (value instanceof ValueObject) {
 				return value.value;
+			}
+			if (value instanceof Schema) {
+				return value.toString();
 			}
 			if (
 				value &&

@@ -4,6 +4,7 @@ import type { IEntity } from "@/types";
 import { EntitySchema, EntitySource } from "@/symbols";
 import { Type } from "@sinclair/typebox";
 import { Schema } from "@caffeine/schema";
+import { ValueObject } from "@caffeine/value-objects/core";
 
 const DummySchema = Schema.make(Type.Object({}));
 
@@ -16,7 +17,7 @@ describe("ParseEntityToDTOService", () => {
 			[EntitySchema]: DummySchema,
 			[EntitySource]: "test",
 			prop: nested,
-		} as unknown as IEntity<any>;
+		} as unknown as IEntity<ReturnType<typeof Type.Object>>;
 
 		const result = ParseEntityToDTOService.run(entity) as Record<
 			string,
@@ -33,7 +34,7 @@ describe("ParseEntityToDTOService", () => {
 			[EntitySchema]: DummySchema,
 			[EntitySource]: "test",
 			list: [nested, "simple"],
-		} as unknown as IEntity<any>;
+		} as unknown as IEntity<ReturnType<typeof Type.Object>>;
 
 		const result = ParseEntityToDTOService.run(entity) as Record<
 			string,
@@ -42,13 +43,64 @@ describe("ParseEntityToDTOService", () => {
 		expect(result.list).toEqual(["mapped", "simple"]);
 	});
 
+	it("should map ValueObject to its value", () => {
+		const dummyValueObject = Object.create(ValueObject.prototype);
+		dummyValueObject.value = "vo-value";
+
+		const entity = {
+			[EntitySchema]: DummySchema,
+			[EntitySource]: "test",
+			prop: dummyValueObject,
+		} as unknown as IEntity<ReturnType<typeof Type.Object>>;
+
+		const result = ParseEntityToDTOService.run(entity) as Record<
+			string,
+			unknown
+		>;
+		expect(result.prop).toEqual("vo-value");
+	});
+
+	it("should map Schema to its string representation", () => {
+		const entity = {
+			[EntitySchema]: DummySchema,
+			[EntitySource]: "test",
+			schemaProp: DummySchema,
+		} as unknown as IEntity<ReturnType<typeof Type.Object>>;
+
+		const result = ParseEntityToDTOService.run(entity) as Record<
+			string,
+			unknown
+		>;
+		expect(result.schemaProp).toEqual(DummySchema.toString());
+	});
+
+	it("should handle object properties properly (removing _, ignoring __)", () => {
+		const entity = {
+			[EntitySchema]: DummySchema,
+			[EntitySource]: "test",
+			normalProp: "normal",
+			_underscoredProp: "exposed",
+			__secretProp: "hidden",
+		} as unknown as IEntity<ReturnType<typeof Type.Object>>;
+
+		const result = ParseEntityToDTOService.run(entity) as Record<
+			string,
+			unknown
+		>;
+
+		expect(result).toHaveProperty("normalProp", "normal");
+		expect(result).toHaveProperty("underscoredProp", "exposed");
+		expect(result).not.toHaveProperty("_underscoredProp");
+		expect(result).not.toHaveProperty("__secretProp");
+	});
+
 	it("should handle null/undefined gracefully in processValue", () => {
 		const entity = {
 			[EntitySchema]: DummySchema,
 			[EntitySource]: "test",
 			nullable: null,
 			undef: undefined,
-		} as unknown as IEntity<any>;
+		} as unknown as IEntity<ReturnType<typeof Type.Object>>;
 
 		const result = ParseEntityToDTOService.run(entity) as Record<
 			string,

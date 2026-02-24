@@ -4,11 +4,13 @@ import { Entity } from "./entity";
 import { Mapper } from "./mapper";
 import { ValueObject } from "@caffeine/value-objects/core";
 import { Type } from "@sinclair/typebox";
+import type { Static } from "@sinclair/typebox";
 import { Schema } from "@caffeine/schema";
 import type { IValueObjectMetadata } from "@caffeine/value-objects/types";
 import type { EntityDTO } from "@/dtos";
 import { makeEntity } from "./factories";
 import { EntitySchema, EntitySource, EntityContext } from "./symbols";
+import { generateUUID } from "./helpers";
 
 // 1. Define Schema
 const TestDTO = Type.Object({
@@ -89,8 +91,8 @@ class TestEntity extends Entity<typeof TestDTO> {
 		return "method";
 	}
 
-	public [EntityContext](_propertyName: string): IValueObjectMetadata {
-		return {} as IValueObjectMetadata;
+	public override [EntityContext](name: string): IValueObjectMetadata {
+		return { name, source: this[EntitySource] };
 	}
 
 	public static create(
@@ -166,8 +168,10 @@ describe("Mapper", () => {
 		expect(dto.__schema).toBeUndefined();
 		// @ts-expect-error - testing runtime behavior
 		expect(dto.__secretGetter).toBeUndefined();
-		expect((dto as any).regularMethod).toBeUndefined();
-		expect((dto as any).__ignoredInstanceProp).toBeUndefined();
+		expect((dto as Record<string, unknown>).regularMethod).toBeUndefined();
+		expect(
+			(dto as Record<string, unknown>).__ignoredInstanceProp,
+		).toBeUndefined();
 	});
 
 	it("should include properties starting with single underscore but strip the underscore from key", () => {
@@ -194,5 +198,39 @@ describe("Mapper", () => {
 
 		// The mapper validates against entity[EntitySchema] which expects string
 		expect(() => Mapper.toDTO(entity)).toThrow(InvalidDomainDataException);
+	});
+
+	describe("toDomain", () => {
+		it("should create an entity from DTO using a factory", () => {
+			const dto: Static<typeof TestDTO> = {
+				id: generateUUID(),
+				createdAt: new Date().toISOString(),
+				updatedAt: new Date().toISOString(),
+				simpleField: "from-dto",
+				computedField: "computed-from-dto",
+				valueObjectField: "vo-value",
+				arrayField: ["a"],
+				arrayValueObjectField: ["vo1"],
+				nestedEntityLike: { nested: "dto" },
+				privateProp: "secret",
+			};
+
+			const entity = Mapper.toDomain<typeof TestDTO>(dto, (data, props) => {
+				return TestEntity.create({
+					...data,
+					...props,
+					valueObjectField: TestValueObject.create(data.valueObjectField),
+					arrayValueObjectField: data.arrayValueObjectField.map((v) =>
+						TestValueObject.create(v),
+					),
+				});
+			});
+
+			expect(entity).toBeInstanceOf(TestEntity);
+			expect(entity.id).toBe(dto.id);
+			expect(entity.createdAt).toBe(dto.createdAt);
+			expect(entity.updatedAt).toBe(dto.updatedAt);
+			expect((entity as TestEntity).simpleField).toBe("from-dto");
+		});
 	});
 });

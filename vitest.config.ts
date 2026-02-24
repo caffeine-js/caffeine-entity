@@ -6,6 +6,7 @@ export default defineConfig({
 		globals: true,
 		coverage: {
 			exclude: ["src/index.ts", "src/**/*.test.ts", "**/*.d.ts"],
+			include: ["src"],
 		},
 	},
 	plugins: [tsConfigPaths()],
